@@ -1,0 +1,3 @@
+# تبعيات Node.js (يُعاد تثبيتها تلقائياً على Vercel من package.json)
+node_modules/
+.vercel/
