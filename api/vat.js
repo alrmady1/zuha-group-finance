@@ -20,8 +20,9 @@ export default async function handler(req, res) {
 
     const contracting = contractingRaw.data ? computeContractingVat(contractingRaw.data, year, quarter) : null;
     const cleaning = cleaningRaw.data ? computeCleaningVat(cleaningRaw.data, year, quarter) : null;
-    const parts = [contracting, cleaning].filter(Boolean);
-    const combined = parts.length ? combineVat(parts) : null;
+    // "الإجمالي" هو الرقم الفعلي المستخدم للإقرار الضريبي — لا يجوز حسابه إلا عندما يُقرأ
+    // القسمان معاً بنجاح، وإلا سيظهر رقم ناقص (مساهمة قسم واحد فقط) بصفته الإجمالي الكامل خطأً.
+    const combined = (contracting && cleaning) ? combineVat([contracting, cleaning]) : null;
 
     return res.status(200).json({
       year, quarter,
