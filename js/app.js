@@ -51,9 +51,10 @@ async function boot() {
   try {
     const res = await fetch("/api/setup");
     const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ("http " + res.status));
     needsSetup = !!data.needsSetup;
   } catch (e) {
-    root.innerHTML = `<div class="login-wrap"><div class="login-card"><h1>تعذّر الاتصال بالخادم</h1><p class="sub">تحقق من الاتصال بالإنترنت ثم أعد المحاولة.</p><button class="btn primary block" id="retryBtn">إعادة المحاولة</button></div></div>`;
+    root.innerHTML = `<div class="login-wrap"><div class="login-card"><h1>تعذّر الاتصال بالخادم</h1><p class="sub">تحقق من إعداد قاعدة البيانات (Postgres) في Vercel ثم أعد المحاولة.</p><p class="text-muted" style="font-size:11.5px">${e.message}</p><button class="btn primary block" id="retryBtn">إعادة المحاولة</button></div></div>`;
     document.getElementById("retryBtn").onclick = boot;
     return;
   }
