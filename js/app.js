@@ -264,62 +264,105 @@ function renderVatResult(el, data) {
 }
 
 /* ---------- القوائم المالية الموحّدة ---------- */
+// الهوية القانونية للكيان الواحد (قسما المقاولات والتنظيف تحت نفس السجل التجاري
+// والرقم الضريبي) — نفس القيم المُعتمَدة فعلياً في qawaem بقسم التنظيف.
+const COMPANY_LEGAL_NAME = "شركة زهى الاعمال";
+const COMPANY_VAT_NUMBER = "314739292200003";
+const COMPANY_CR_NUMBER = "";
+
 const SOURCE_BADGE = {
   auto: "",
   estimate: `<span class="badge orange">تقدير</span>`,
   manual: `<span class="badge gray">يدوي</span>`,
 };
+const SOURCE_LABEL = { auto: "تلقائي", estimate: "تقديري", manual: "يدوي — يُملأ هنا" };
 
-const STMT_LABELS = {
-  income: {
-    revenue: "الإيرادات", costOfSales: "تكلفة المبيعات", grossProfit: "مجمل الربح",
-    generalAdminExpenses: "مصاريف عمومية وإدارية", sellingDistributionExpenses: "مصاريف بيع وتوزيع",
-    otherExpenses: "مصاريف أخرى", otherIncome: "إيرادات أخرى",
-    netProfitBeforeTax: "صافي الربح قبل الزكاة والضريبة", financeCost: "تكاليف تمويلية",
-    zakat: "الزكاة", incomeTax: "ضريبة الدخل", netProfitForPeriod: "صافي ربح الفترة",
-    otherComprehensiveIncome: "الدخل الشامل الآخر", totalComprehensiveIncome: "إجمالي الدخل الشامل للفترة",
-  },
-  balance: {
-    propertyPlantEquipment: "ممتلكات ومعدات", intangibleAssets: "أصول غير ملموسة",
-    investmentProperty: "عقارات استثمارية", equityMethodInvestments: "استثمارات بطريقة حقوق الملكية",
-    otherNonCurrentAssets: "موجودات غير متداولة أخرى", totalNonCurrentAssets: "إجمالي الموجودات غير المتداولة",
-    prepaidAndOtherDebitBalances: "دفعات مقدمة وأرصدة مدينة أخرى (عهد وسلف)", tradeReceivables: "ذمم مدينة تجارية",
-    cashAndEquivalents: "النقد وما في حكمه", inventory: "المخزون", fvInvestments: "استثمارات بالقيمة العادلة",
-    otherCurrentAssets: "موجودات متداولة أخرى", dueFromRelatedParties: "مستحق من أطراف ذات علاقة",
-    totalCurrentAssets: "إجمالي الموجودات المتداولة", totalAssets: "إجمالي الموجودات",
-    capital: "رأس المال", statutoryReserve: "الاحتياطي النظامي", retainedEarnings: "الأرباح المبقاة",
-    otherEquityItems: "بنود حقوق ملكية أخرى", parentEquity: "حقوق ملكية الشركة الأم",
-    nonControllingInterest: "حقوق الأقلية", totalEquity: "إجمالي حقوق الملكية",
-    employeeBenefitsObligation: "التزامات مكافأة نهاية الخدمة", longTermDebt: "قروض طويلة الأجل",
-    deferredTaxLiabilities: "ضريبة مؤجلة", otherNonCurrentLiabilities: "مطلوبات غير متداولة أخرى",
-    totalNonCurrentLiabilities: "إجمالي المطلوبات غير المتداولة", currentDebt: "قروض قصيرة الأجل",
-    zakatPayable: "الزكاة المستحقة", taxesPayable: "ضرائب مستحقة", dueToRelatedParties: "مستحق لأطراف ذات علاقة",
-    tradeAndOtherPayables: "ذمم دائنة تجارية وأخرى", accruedExpenses: "مصاريف مستحقة",
-    otherCurrentLiabilities: "مطلوبات متداولة أخرى", totalCurrentLiabilities: "إجمالي المطلوبات المتداولة",
-    totalLiabilities: "إجمالي المطلوبات", totalEquityAndLiabilities: "إجمالي حقوق الملكية والمطلوبات",
-  },
-  equity: {
-    openingCapital: "رأس المال — رصيد أول الفترة", openingReserve: "الاحتياطي — رصيد أول الفترة",
-    openingRetainedEarnings: "الأرباح المبقاة — رصيد أول الفترة", openingTotal: "الإجمالي — أول الفترة",
-    capitalAdded: "زيادة رأس المال خلال الفترة", netIncomeForPeriod: "صافي ربح الفترة",
-    closingCapital: "رأس المال — رصيد آخر الفترة", closingReserve: "الاحتياطي — رصيد آخر الفترة",
-    closingRetainedEarnings: "الأرباح المبقاة — رصيد آخر الفترة", closingTotal: "الإجمالي — آخر الفترة",
-  },
-  cashFlow: {
-    netProfitBeforeTax: "صافي الربح قبل الزكاة والضريبة", depreciationAddback: "إضافة: الإهلاك",
-    eosProvisionMovement: "التغير في مخصص نهاية الخدمة", changeInReceivablesAndPrepaid: "التغير في الذمم المدينة والمدفوعات المقدمة",
-    changeInPayables: "التغير في الذمم الدائنة", netCashFromOperating: "صافي النقد من الأنشطة التشغيلية",
-    ppeAdditions: "إضافات ممتلكات ومعدات", netCashUsedInInvesting: "صافي النقد المستخدم في الأنشطة الاستثمارية",
-    capitalAdditions: "زيادة رأس المال", netCashFromFinancing: "صافي النقد من الأنشطة التمويلية",
-    netChangeInCash: "صافي التغير في النقد", cashAtStart: "النقد أول الفترة", cashAtEnd: "النقد آخر الفترة",
-  },
-};
-const STMT_TOTAL_KEYS = new Set([
-  "grossProfit", "netProfitBeforeTax", "netProfitForPeriod", "totalComprehensiveIncome",
-  "totalNonCurrentAssets", "totalCurrentAssets", "totalAssets", "totalEquity",
-  "totalNonCurrentLiabilities", "totalCurrentLiabilities", "totalLiabilities", "totalEquityAndLiabilities",
-  "openingTotal", "closingTotal", "netCashFromOperating", "netCashUsedInInvesting", "netCashFromFinancing", "netChangeInCash",
-]);
+// نفس بنود وترتيب وتسميات النموذج الرسمي المُعتمَد لتعبئة "برنامج قوائم"
+// التابع للمركز السعودي للتنافسية والأعمال (qawaem.bc.gov.sa) — مطابقة حرفياً
+// لصفحة القوائم المالية في قسم التنظيف (src/client/pages/FinancialStatements.tsx).
+const INCOME_ROWS = [
+  { key: "revenue", label: "مبيعات / الإيرادات", bold: true, highlight: true },
+  { key: "costOfSales", label: "تكلفة المبيعات" },
+  { key: "grossProfit", label: "مجمل الربح", bold: true },
+  { key: "generalAdminExpenses", label: "مصاريف إدارية وعمومية" },
+  { key: "sellingDistributionExpenses", label: "مصاريف بيع وتوزيع" },
+  { key: "otherExpenses", label: "مصاريف أخرى" },
+  { key: "otherIncome", label: "دخل آخر" },
+  { key: "netProfitBeforeTax", label: "صافي ربح الفترة قبل ضريبة الدخل", bold: true },
+  { key: "financeCost", label: "تكلفة مصروف التمويل" },
+  { key: "zakat", label: "الزكاة" },
+  { key: "incomeTax", label: "ضريبة الدخل" },
+  { key: "netProfitForPeriod", label: "صافي ربح الفترة", bold: true, highlight: true },
+  { key: "otherComprehensiveIncome", label: "الدخل الشامل الآخر" },
+  { key: "totalComprehensiveIncome", label: "إجمالي الربح الشامل للفترة", bold: true },
+];
+const BALANCE_ROWS = [
+  { key: "propertyPlantEquipment", label: "ممتلكات وآلات ومعدات" },
+  { key: "intangibleAssets", label: "موجودات غير ملموسة باستثناء الشهرة" },
+  { key: "investmentProperty", label: "العقارات الاستثمارية" },
+  { key: "equityMethodInvestments", label: "الاستثمارات المحتسبة بطريقة حقوق الملكية" },
+  { key: "otherNonCurrentAssets", label: "موجودات غير متداولة أخرى" },
+  { key: "totalNonCurrentAssets", label: "إجمالي الموجودات غير المتداولة", bold: true },
+  { key: "prepaidAndOtherDebitBalances", label: "مصاريف مدفوعة مقدماً وأرصدة مدينة أخرى (عهد وسلف الموظفين)" },
+  { key: "tradeReceivables", label: "ذمم مدينة تجارية" },
+  { key: "cashAndEquivalents", label: "نقد وما في حكمه" },
+  { key: "inventory", label: "مخزون" },
+  { key: "fvInvestments", label: "استثمارات القيمة العادلة من خلال الأرباح والخسائر" },
+  { key: "otherCurrentAssets", label: "أصول متداولة أخرى" },
+  { key: "dueFromRelatedParties", label: "مطلوب من أطراف ذات علاقة" },
+  { key: "totalCurrentAssets", label: "إجمالي الموجودات المتداولة", bold: true },
+  { key: "totalAssets", label: "إجمالي الموجودات", bold: true, highlight: true },
+  { key: "capital", label: "رأس المال" },
+  { key: "statutoryReserve", label: "احتياطي نظامي" },
+  { key: "retainedEarnings", label: "أرباح مبقاة (خسائر متراكمة)" },
+  { key: "otherEquityItems", label: "عناصر أخرى لحقوق الملكية" },
+  { key: "parentEquity", label: "حقوق الملكية المتعلقة بملاك الشركة" },
+  { key: "nonControllingInterest", label: "حقوق الملكية غير المسيطرة" },
+  { key: "totalEquity", label: "إجمالي حقوق الملكية", bold: true },
+  { key: "employeeBenefitsObligation", label: "التزام منافع الموظفين" },
+  { key: "longTermDebt", label: "سندات دين وقروض لأجل، غير متداولة" },
+  { key: "deferredTaxLiabilities", label: "مطلوبات ضريبية مؤجلة" },
+  { key: "otherNonCurrentLiabilities", label: "مطلوبات غير متداولة أخرى" },
+  { key: "totalNonCurrentLiabilities", label: "إجمالي المطلوبات غير المتداولة", bold: true },
+  { key: "currentDebt", label: "سندات دين وقروض لأجل، متداولة" },
+  { key: "zakatPayable", label: "الزكاة مستحقة الدفع" },
+  { key: "taxesPayable", label: "الضرائب مستحقة الدفع" },
+  { key: "dueToRelatedParties", label: "مطلوب إلى أطراف ذات علاقة" },
+  { key: "tradeAndOtherPayables", label: "المبالغ المستحقة للموردين والبائعين" },
+  { key: "accruedExpenses", label: "مصاريف مستحقة وأرصدة دائنة أخرى" },
+  { key: "otherCurrentLiabilities", label: "مطلوبات متداولة أخرى" },
+  { key: "totalCurrentLiabilities", label: "إجمالي المطلوبات المتداولة", bold: true },
+  { key: "totalLiabilities", label: "إجمالي المطلوبات", bold: true },
+  { key: "totalEquityAndLiabilities", label: "إجمالي حقوق الملكية والمطلوبات", bold: true, highlight: true },
+];
+const EQUITY_ROWS = [
+  { key: "openingCapital", label: "رأس المال — رصيد أول الفترة" },
+  { key: "openingReserve", label: "الاحتياطي — رصيد أول الفترة" },
+  { key: "openingRetainedEarnings", label: "الأرباح المبقاة — رصيد أول الفترة" },
+  { key: "openingTotal", label: "الإجمالي — أول الفترة", bold: true },
+  { key: "capitalAdded", label: "زيادة رأس المال خلال الفترة" },
+  { key: "netIncomeForPeriod", label: "صافي ربح الفترة" },
+  { key: "closingCapital", label: "رأس المال — رصيد آخر الفترة" },
+  { key: "closingReserve", label: "الاحتياطي — رصيد آخر الفترة" },
+  { key: "closingRetainedEarnings", label: "الأرباح المبقاة — رصيد آخر الفترة" },
+  { key: "closingTotal", label: "الإجمالي — آخر الفترة", bold: true, highlight: true },
+];
+const CASHFLOW_ROWS = [
+  { key: "netProfitBeforeTax", label: "صافي ربح الفترة قبل ضريبة الدخل" },
+  { key: "depreciationAddback", label: "استهلاك ممتلكات وآلات ومعدات (بند غير نقدي)" },
+  { key: "eosProvisionMovement", label: "التغيّر في مخصص التزامات منافع الموظفين" },
+  { key: "changeInReceivablesAndPrepaid", label: "التغيّر في الذمم المدينة والمصاريف المدفوعة مقدماً" },
+  { key: "changeInPayables", label: "التغيّر في المطلوبات المتداولة" },
+  { key: "netCashFromOperating", label: "صافي النقد الناتج من الأنشطة التشغيلية", bold: true },
+  { key: "ppeAdditions", label: "إضافة ممتلكات وآلات ومعدات" },
+  { key: "netCashUsedInInvesting", label: "صافي النقد المستخدم في الأنشطة الاستثمارية", bold: true },
+  { key: "capitalAdditions", label: "إضافة رأس المال" },
+  { key: "netCashFromFinancing", label: "صافي النقد الناتج من الأنشطة التمويلية", bold: true },
+  { key: "netChangeInCash", label: "صافي التغيّر في النقد وما في حكمه", bold: true },
+  { key: "cashAtStart", label: "النقد وما في حكمه في بداية الفترة" },
+  { key: "cashAtEnd", label: "النقد وما في حكمه في نهاية الفترة", bold: true, highlight: true },
+];
+const STMT_ROWS = { income: INCOME_ROWS, balance: BALANCE_ROWS, equity: EQUITY_ROWS, cashFlow: CASHFLOW_ROWS };
 const STMT_TABS = [
   { key: "income", title: "قائمة الدخل الشامل" },
   { key: "balance", title: "المركز المالي" },
@@ -328,16 +371,14 @@ const STMT_TABS = [
 ];
 
 function statementTableHtml(kind, statement) {
-  const labels = STMT_LABELS[kind];
   if (!statement) return `<p class="text-muted">لا توجد بيانات</p>`;
-  const rows = Object.keys(labels).map(key => {
-    const l = statement[key];
+  const rows = STMT_ROWS[kind].map(spec => {
+    const l = statement[spec.key];
     if (!l) return "";
-    const isTotal = STMT_TOTAL_KEYS.has(key);
     const noteHtml = l.note ? `<div class="text-muted" style="font-size:11px;margin-top:2px">${l.note}</div>` : "";
     return `
-      <tr class="${isTotal ? "stmt-total" : "stmt-sub"}">
-        <td class="stmt-label">${labels[key]} ${SOURCE_BADGE[l.source] || ""}${noteHtml}</td>
+      <tr class="${spec.bold ? "stmt-total" : "stmt-sub"}">
+        <td class="stmt-label">${spec.label} ${SOURCE_BADGE[l.source] || ""}${noteHtml}</td>
         <td class="stmt-value" style="color:${l.value < 0 ? "var(--danger)" : "inherit"}">${fmtMoney(l.value)}</td>
       </tr>`;
   }).join("");
@@ -350,6 +391,118 @@ function divisionStatementCardHtml(title, kind, statementSet, error) {
   return `<div class="card"><h3>${title}</h3>${statementTableHtml(kind, statementSet[kind])}</div>`;
 }
 
+/* ---------- نافذة منبثقة عامة للطباعة/PDF ---------- */
+function openPrintModal(title, bodyHtml) {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.innerHTML = `
+    <div class="modal-box">
+      <div class="modal-box-head no-print">
+        <h3 style="margin:0;font-size:14px">${title}</h3>
+        <div class="flex gap">
+          <button class="btn primary sm" id="pm_print">طباعة / تصدير PDF</button>
+          <button class="btn sm" id="pm_close">إغلاق</button>
+        </div>
+      </div>
+      <div class="modal-box-body print-area">${bodyHtml}</div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  overlay.querySelector("#pm_close").onclick = () => overlay.remove();
+  overlay.querySelector("#pm_print").onclick = () => window.print();
+  overlay.addEventListener("click", (e) => { if (e.target === overlay) overlay.remove(); });
+}
+
+function companyHeaderHtml(subtitle, from, to) {
+  return `
+    <div style="text-align:center;border-bottom:1px dashed #ccc;padding-bottom:14px;margin-bottom:16px">
+      <div style="font-size:17px;font-weight:800">${COMPANY_LEGAL_NAME}</div>
+      <div style="font-size:12px;color:#666">الرقم الضريبي: ${COMPANY_VAT_NUMBER}${COMPANY_CR_NUMBER ? " — س.ت: " + COMPANY_CR_NUMBER : ""}</div>
+      <div style="font-size:13px;font-weight:700;color:var(--primary);margin-top:4px">${subtitle}</div>
+      ${from && to ? `<div style="font-size:12px;color:#888" dir="ltr">${from} — ${to}</div>` : ""}
+    </div>
+  `;
+}
+
+function printStatementsDocument(data) {
+  if (!data.combined) { toast("تعذّر إنشاء المستند — لم يُحسَب الإجمالي (تحقق من اتصال القسمين)"); return; }
+  const { income, balance, cashFlow } = data.combined;
+  const body = `
+    ${companyHeaderHtml("القوائم المالية الموحّدة (الكيان بالكامل)", data.from, data.to)}
+    <div class="card"><h3 class="mt-0">قائمة الدخل الشامل</h3>${statementTableHtml("income", income)}</div>
+    <div class="card"><h3 class="mt-0">قائمة المركز المالي</h3>${statementTableHtml("balance", balance)}</div>
+    <div class="card"><h3 class="mt-0">قائمة التدفقات النقدية</h3>${statementTableHtml("cashFlow", cashFlow)}</div>
+    <p class="text-muted" style="font-size:11px">البنود الموسومة "تقدير" مبنية على افتراضات مبسَّطة، والبنود الموسومة "يدوي" غير مُتتبَّعة في أي من النظامين (قيمتها صفر) — يُنصح بمراجعتها قبل الإيداع الرسمي.</p>
+  `;
+  openPrintModal("القوائم المالية", body);
+}
+
+function printAuditorExemptionDeclaration(fiscalYearEnd) {
+  const body = `
+    <h1 style="text-align:center;font-size:15px">إقرار سنوي بعدم سريان متطلب تعيين مراجع حسابات للشركة لكونها متناهية الصغر أو صغيرة</h1>
+    <div style="font-size:13.5px;line-height:2">
+      <p>بهذا أنا (رئيس مجلس الادارة / مدير / رئيس مجلس مديرين / رئيس الشركة) <span style="display:inline-block;min-width:160px;border-bottom:1px dotted #999">&nbsp;</span></p>
+      <p>شركة <strong>${COMPANY_LEGAL_NAME}</strong></p>
+      <p>سجل تجاري <span style="display:inline-block;min-width:140px;border-bottom:1px dotted #999">${COMPANY_CR_NUMBER || ""}&nbsp;</span> أقر بالتالي:</p>
+      <ul style="padding-inline-start:20px">
+        <li>أن الشركة بنهاية العام المالي المنتهي في <strong dir="ltr">${fiscalYearEnd}</strong> هي شركة متناهية الصغر أو صغيرة وفقاً لنص المادة (التاسعة عشرة) من نظام الشركات، والمادة (السابعة) من اللائحة التنفيذية لنظام الشركات بعد تحقق معيارين على الأقل مما يلي (يتعيَّن تحديد معيارين على الأقل):
+          <ol>
+            <li>عدم تجاوز مجموع إيراداتها السنوية مبلغ عشرة ملايين ريال سعودي.</li>
+            <li>عدم تجاوز مجموع أصولها مبلغ عشرة ملايين ريال سعودي.</li>
+            <li>عدم تجاوز مجموع موظفيها عدد تسعة وأربعين موظفاً.</li>
+          </ol>
+        </li>
+        <li>عدم انطباق الاستثناءات الواردة في الفقرة -1- من المادة (التاسعة عشرة) من نظام الشركات على الشركة.</li>
+        <li>عدم تقدم أي شريك أو مساهم أو أكثر ممن يمثلون النسبة المقررة الواردة في نص الفقرة -3- من المادة (التاسعة عشرة) من نظام الشركات، بطلب تعيين مراجع حسابات وفقاً للضوابط المنصوص عليها في المادة (الثامنة) من اللائحة التنفيذية لنظام الشركات.</li>
+      </ul>
+      <p>وبناءً على ما سبق، لا يسري على الشركة متطلب تعيين مراجع حسابات للسنة المالية المذكورة أعلاه، وأتعهد بصحة البيانات والإقرارات الواردة أعلاه، وأتحمل كافة المسؤولية والتبعات النظامية حال ثبوت خلاف ذلك.</p>
+      <div style="margin-top:40px;text-align:center">
+        <p style="font-weight:700">(رئيس مجلس الادارة / مدير / رئيس مجلس مديرين / رئيس الشركة)</p>
+        <p style="margin-top:24px">الإسم: <span style="display:inline-block;min-width:220px;border-bottom:1px dotted #999">&nbsp;</span></p>
+        <p>التوقيع: <span style="display:inline-block;min-width:220px;border-bottom:1px dotted #999">&nbsp;</span></p>
+      </div>
+    </div>
+  `;
+  openPrintModal("إقرار الإعفاء من مراجع الحسابات", body);
+}
+
+// تصدير إكسل — بنفس بنود وترتيب النموذج الرسمي بالضبط، جاهز للنسخ مباشرة إلى
+// برنامج قوائم؛ البنود اليدوية (صفر) تُعدَّل هنا مباشرة قبل الاعتماد النهائي.
+function exportStatementsExcel(data) {
+  if (!window.XLSX) { toast("تعذّر تحميل مكتبة الإكسل — تحقق من الاتصال بالإنترنت"); return; }
+  if (!data.combined) { toast("تعذّر التصدير — لم يُحسَب الإجمالي (تحقق من اتصال القسمين)"); return; }
+  const { income, balance, cashFlow } = data.combined;
+  const wb = XLSX.utils.book_new();
+
+  function sheetFromRows(rows, statement) {
+    const aoa = [["البند", "المصدر", "القيمة (ر.س)", "ملاحظة"]];
+    rows.forEach(r => {
+      const l = statement[r.key];
+      if (!l) return;
+      aoa.push([r.label, SOURCE_LABEL[l.source], l.value, l.note || ""]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 45 }, { wch: 16 }, { wch: 16 }, { wch: 60 }];
+    return ws;
+  }
+
+  const summary = XLSX.utils.aoa_to_sheet([
+    ["القوائم المالية — " + COMPANY_LEGAL_NAME],
+    [`الفترة: ${data.from} إلى ${data.to}`],
+    [""],
+    ["الإيرادات", income.revenue.value],
+    ["مجموع الموجودات", balance.totalAssets.value],
+    [""],
+    ["تنبيه: البنود الموسومة \"يدوي\" في كل ورقة قيمتها صفر افتراضياً — عدِّلها هنا مباشرة قبل نسخ الأرقام إلى برنامج قوائم."],
+  ]);
+  summary["!cols"] = [{ wch: 70 }, { wch: 20 }];
+  XLSX.utils.book_append_sheet(wb, summary, "ملخص");
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(INCOME_ROWS, income), "قائمة الدخل الشامل");
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(BALANCE_ROWS, balance), "قائمة المركز المالي");
+  XLSX.utils.book_append_sheet(wb, sheetFromRows(CASHFLOW_ROWS, cashFlow), "قائمة التدفقات النقدية");
+  XLSX.writeFile(wb, `القوائم-المالية-${data.from}-${data.to}.xlsx`);
+}
+
 let STMT_TAB = "income";
 let STMT_FROM = `${new Date().getFullYear()}-01-01`;
 let STMT_TO = new Date().toISOString().slice(0, 10);
@@ -360,6 +513,11 @@ async function renderStatementsPage(el) {
   el.innerHTML = `
     <div class="section-title-row">
       <div><h2>القوائم المالية الموحّدة</h2><p>القوائم الرسمية للكيان بالكامل — تُحسَب فقط عند نجاح قراءة القسمين معاً</p></div>
+      <div class="flex gap wrap">
+        <button class="btn" id="stmtPrint">🖶 طباعة / PDF القوائم المالية</button>
+        <button class="btn" id="stmtDeclaration">🖶 طباعة إقرار الإعفاء من مراجع الحسابات</button>
+        <button class="btn primary" id="stmtExcel">⬇ تصدير إكسل (لبرنامج قوائم)</button>
+      </div>
     </div>
     <div class="card">
       <div class="flex gap wrap" style="align-items:flex-end">
@@ -380,6 +538,9 @@ async function renderStatementsPage(el) {
     STMT_ASOF = document.getElementById("stmtAsOf").value || STMT_TO;
     loadStatements(el);
   };
+  document.getElementById("stmtPrint").onclick = () => { if (STMT_DATA) printStatementsDocument(STMT_DATA); else toast("انتظر انتهاء التحميل أولاً"); };
+  document.getElementById("stmtDeclaration").onclick = () => printAuditorExemptionDeclaration(STMT_TO);
+  document.getElementById("stmtExcel").onclick = () => { if (STMT_DATA) exportStatementsExcel(STMT_DATA); else toast("انتظر انتهاء التحميل أولاً"); };
   el.querySelectorAll("[data-stmttab]").forEach(p => p.onclick = () => {
     STMT_TAB = p.dataset.stmttab;
     el.querySelectorAll("[data-stmttab]").forEach(x => x.classList.toggle("active", x === p));
