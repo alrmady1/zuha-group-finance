@@ -141,12 +141,18 @@ a { color: inherit; text-decoration: none; }
 .modal-box-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
 .modal-box-body { padding: 22px; overflow-y: auto; }
 
+/* الطباعة: يُخفى التطبيق كلياً (display:none وليس visibility فقط حتى لا تبقى
+   مساحته صفحات فارغة)، ويتدفق المستند داخل النافذة على صفحات عادية. لا بد من
+   إلغاء overflow (المحدَّد أعلاه على .modal-box و.modal-box-body) وإلا قُصّ
+   المستند عند حدّ الصفحة الأولى وظهر بشريط تمرير داخل الصفحة المطبوعة. */
 @media print {
-  body * { visibility: hidden; }
-  .print-area, .print-area * { visibility: visible; }
-  .modal-overlay, .modal-box { position: static; background: none; box-shadow: none; max-height: none; }
-  .print-area { position: absolute; inset: 0; padding: 10px; }
+  body > *:not(.modal-overlay) { display: none !important; }
+  html, body { height: auto; min-height: 0; overflow: visible; background: #fff; }
+  .modal-overlay { position: static; display: block; background: none; padding: 0; }
+  .modal-box { display: block; position: static; max-width: none; max-height: none; overflow: visible; background: none; box-shadow: none; border-radius: 0; }
+  .modal-box-body, .print-area { position: static; max-height: none; overflow: visible; padding: 10px; }
   .no-print { display: none !important; }
+  tr { break-inside: avoid; }
 }
 
 .text-muted { color: var(--text-muted); }
